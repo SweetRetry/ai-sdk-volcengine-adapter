@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+
+- 修复 Image Generation 返回 URL 时 AI SDK 解析失败的问题
+- 强制使用 `b64_json` 格式返回图片数据（AI SDK 要求 base64 编码）
+
 ## 0.1.4
 
 - 简化导出接口，移除内部实现细节的导出

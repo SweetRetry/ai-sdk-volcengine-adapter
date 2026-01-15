@@ -1,9 +1,6 @@
 import {
   ImageModelV3,
-  ImageModelV3CallOptions,
   ImageModelV3File,
-  ImageModelV3ProviderMetadata,
-  ImageModelV3Usage,
   SharedV3Warning,
 } from '@ai-sdk/provider';
 import {
@@ -52,17 +49,9 @@ export class VolcengineImageModel implements ImageModelV3 {
     providerOptions,
     headers,
     abortSignal,
-  }: ImageModelV3CallOptions): Promise<{
-    images: Array<string> | Array<Uint8Array>;
-    warnings: Array<SharedV3Warning>;
-    providerMetadata?: ImageModelV3ProviderMetadata;
-    response: {
-      timestamp: Date;
-      modelId: string;
-      headers: Record<string, string> | undefined;
-    };
-    usage?: ImageModelV3Usage;
-  }> {
+  }: Parameters<ImageModelV3['doGenerate']>[0]): Promise<
+    Awaited<ReturnType<ImageModelV3['doGenerate']>>
+  > {
     const warnings: SharedV3Warning[] = [];
 
     // Handle unsupported options
@@ -80,13 +69,16 @@ export class VolcengineImageModel implements ImageModelV3 {
       });
     }
 
-    // Build request body
+    // Build request body - always use b64_json as AI SDK requires base64 data
+    const { response_format: _, ...volcengineOptions } =
+      (providerOptions.volcengine as Record<string, unknown>) ?? {};
+
     const body: Record<string, unknown> = {
       model: this.modelId,
       prompt,
-      size: size ?? '1024x1024',
+      size: size ?? '2048x2048',
+      ...volcengineOptions,
       response_format: 'b64_json',
-      ...(providerOptions.volcengine ?? {}),
     };
 
     // Handle reference images for image-to-image generation
@@ -112,15 +104,12 @@ export class VolcengineImageModel implements ImageModelV3 {
       fetch: this.config.fetch,
     });
 
-    // Extract images from response
+    // Extract base64 images from response
     const images: string[] = response.data.map(item => {
-      if (item.b64_json) {
-        return item.b64_json;
+      if (!item.b64_json) {
+        throw new Error('No base64 image data in response');
       }
-      if (item.url) {
-        return item.url;
-      }
-      throw new Error('No image data in response');
+      return item.b64_json;
     });
 
     return {
