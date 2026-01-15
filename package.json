@@ -1,6 +1,6 @@
 {
   "name": "@sweetretry/ai-sdk-volcengine-adapter",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Volcengine adapter for AI SDK",
   "license": "MIT",
   "author": "SweetRetry <zimin.zhang2000@gmail.com>",
